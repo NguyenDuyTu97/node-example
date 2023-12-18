@@ -5,11 +5,15 @@ const {
   getUsers,
   updateUser,
   deleteUser,
+  login,
 } = require("../controllers/userController");
 const { addRole } = require("../controllers/roleController");
 const router = express.Router();
 
 // middleware that is specific to this router
+
+// login
+router.post("/login", login);
 
 // home
 router.get("/", getHomeInfo);

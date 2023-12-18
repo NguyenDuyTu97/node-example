@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const jwt = require("jsonwebtoken");
 const User = require("../models/user");
 
 const getUsers = (req, res) => {
@@ -106,9 +107,36 @@ const deleteUser = async (req, res) => {
   });
 };
 
+const login = async (req, res) => {
+  const { email, password } = req?.body || {};
+  if (!(email && password)) {
+    res.status(400).send("All input is required");
+  }
+  // Validate if user exist in our database
+  const user = await User.findOne({ email });
+
+  if (!user) return res.status(400).send("Invalid Credentials");
+
+  const token = jwt.sign({ user_id: user._id, email }, process.env.TOKEN_KEY, {
+    expiresIn: "2h",
+  });
+
+  // save user token
+  user.token = token;
+
+  // return new user
+  return res.status(200).json({
+    success: true,
+    message: "Login successfully",
+    data: user,
+  });
+};
+
 module.exports = {
   getUsers,
   addUser,
   updateUser,
   deleteUser,
+
+  login,
 };
