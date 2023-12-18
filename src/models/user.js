@@ -4,21 +4,21 @@ mongoose.Promise = global.Promise;
 
 const userSchema = new mongoose.Schema({
   _id: mongoose.Schema.Types.ObjectId,
-  title: {
+  firstName: {
     type: String,
-    required: false,
+    required: true,
   },
-  author: {
+  lastName: {
     type: String,
-    required: false,
+    required: true,
   },
-  published: {
+  email: {
     type: String,
-    required: false,
+    required: true,
   },
-  publisher: {
+  password: {
     type: String,
-    required: false,
+    required: true,
   },
 });
 
