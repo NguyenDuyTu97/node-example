@@ -115,7 +115,12 @@ const login = async (req, res) => {
   // Validate if user exist in our database
   const user = await User.findOne({ email });
 
-  if (!user) return res.status(400).send("Invalid Credentials");
+  if (!user)
+    return res.status(400).json({
+      success: false,
+      message: "User does not exist",
+      data: null,
+    });
 
   const token = jwt.sign({ user_id: user._id, email }, process.env.TOKEN_KEY, {
     expiresIn: "2h",
