@@ -8,6 +8,7 @@ const {
   login,
 } = require("../controllers/userController");
 const { addRole } = require("../controllers/roleController");
+const { verifyAuth } = require("../middleware/userMiddleware");
 const router = express.Router();
 
 // middleware that is specific to this router
@@ -19,7 +20,7 @@ router.post("/login", login);
 router.get("/", getHomeInfo);
 
 // user
-router.get("/get-users", getUsers);
+router.get("/get-users", verifyAuth, getUsers);
 router.post("/add-user", addUser);
 router.put("/update-user", updateUser);
 router.delete("/delete-user/:id", deleteUser);

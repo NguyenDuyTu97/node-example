@@ -4,21 +4,19 @@ const User = require("../models/user");
 
 const getUsers = (req, res) => {
   return User.find({}).then((users) => {
-    return res
-      .status(200)
-      .json({
-        success: true,
-        message: "get list user successfully",
-        User: users,
-      })
-      .catch((error) => {
-        console.log(error);
-        res.status(500).json({
-          success: false,
-          message: "Server error. Please try again.",
-          error: error.message,
-        });
-      });
+    return res.status(200).json({
+      success: true,
+      message: "get list user successfully",
+      User: users,
+    });
+    // .catch((error) => {
+    //   console.log(error);
+    //   res.status(500).json({
+    //     success: false,
+    //     message: "Server error. Please try again.",
+    //     error: error.message,
+    //   });
+    // });
   });
 };
 
@@ -113,7 +111,7 @@ const login = async (req, res) => {
     res.status(400).send("All input is required");
   }
   // Validate if user exist in our database
-  const user = await User.findOne({ email });
+  const user = await User.findOne({ email, password });
 
   if (!user)
     return res.status(400).json({
@@ -123,7 +121,7 @@ const login = async (req, res) => {
     });
 
   const token = jwt.sign({ user_id: user._id, email }, process.env.TOKEN_KEY, {
-    expiresIn: "2h",
+    expiresIn: "15s",
   });
 
   // save user token
