@@ -2,137 +2,178 @@ const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
 const User = require("../models/user");
 
-const getUsers = (req, res) => {
-  return User.find({}).then((users) => {
-    return res.status(200).json({
-      success: true,
-      message: "get list user successfully",
-      User: users,
-    });
-    // .catch((error) => {
-    //   console.log(error);
-    //   res.status(500).json({
-    //     success: false,
-    //     message: "Server error. Please try again.",
-    //     error: error.message,
-    //   });
-    // });
-  });
-};
-
-const addUser = (req, res) => {
-  const { firstName, lastName, email, password } = req?.body || {};
-  const user = new User({
-    _id: new mongoose.Types.ObjectId(),
-    firstName,
-    lastName,
-    email,
-    password,
-  });
-
-  return user
-    .save()
-    .then((newUser) => {
-      return res.status(201).json({
+const getUsers = async (req, res) => {
+  try {
+    const result = await User.find({});
+    if (result) {
+      return res.status(200).json({
         success: true,
-        message: "New user created successfully",
-        User: newUser,
+        message: "Get users successfully",
+        data: result,
       });
-    })
-    .catch((error) => {
-      console.log(error);
-      res.status(500).json({
+    } else {
+      return res.status(500).json({
         success: false,
         message: "Server error. Please try again.",
         error: error.message,
       });
+    }
+  } catch (error) {
+    console.log(error, "error");
+  }
+};
+
+const addUser = async (req, res) => {
+  try {
+    const { firstName, lastName, email, password } = req?.body || {};
+    const newUser = new User({
+      _id: new mongoose.Types.ObjectId(),
+      firstName,
+      lastName,
+      email,
+      password,
     });
+
+    const result = await newUser.save();
+    if (result) {
+      return res.status(201).json({
+        success: true,
+        message: "Created user successfully",
+        data: newUser,
+      });
+    } else {
+      return res.status(500).json({
+        success: false,
+        message: "Server error. Please try again.",
+        error: error.message,
+      });
+    }
+  } catch (error) {
+    console.log(error, "error");
+  }
 };
 
 const updateUser = async (req, res) => {
-  const { id, firstName, lastName, email, password } = req?.body || {};
+  try {
+    const { id, firstName, lastName, email, password } = req?.body || {};
 
-  const user = await User.findById(id).exec();
-  if (!user)
-    return res.status(203).json({
-      success: true,
-      message: "User does not exist",
-      User: null,
-    });
+    const user = await User.findById(id).exec();
+    if (!user)
+      return res.status(203).json({
+        success: true,
+        message: "User does not exist",
+        data: null,
+      });
 
-  // const result = await User.updateOne(
-  //   {},
-  //   { firstName, lastName, email, password }
-  // );
-  // console.log(result, "result 111");
-
-  return User.updateOne({}, { firstName, lastName, email, password })
-    .then((newUser) => {
+    const result = await User.updateOne(
+      {},
+      { firstName, lastName, email, password }
+    );
+    if (result) {
       return res.status(200).json({
         success: true,
         message: "Update user successfully",
-        User: newUser,
+        data: user,
       });
-    })
-    .catch((error) => {
-      console.log(error);
-      res.status(500).json({
+    } else {
+      return res.status(500).json({
         success: false,
         message: "Server error. Please try again.",
         error: error.message,
       });
-    });
+    }
+  } catch (error) {
+    console.log(error, "error");
+  }
 };
 
 const deleteUser = async (req, res) => {
-  const { id } = req?.params || {};
-  const user = await User.findById(id).exec();
-  if (!user)
-    return res.status(203).json({
-      success: true,
-      message: "User does not exist",
-      User: null,
+  try {
+    const { id } = req?.params || {};
+    const user = await User.findById(id).exec();
+    if (!user)
+      return res.status(203).json({
+        success: true,
+        message: "User does not exist",
+        User: null,
+      });
+
+    const result = await User.deleteOne({
+      _id: new mongoose.Types.ObjectId(id),
     });
 
-  return User.deleteOne({
-    _id: new mongoose.Types.ObjectId(id),
-  }).then((response) => {
-    return res.status(200).json({
-      success: true,
-      message: "Delete user successfully",
-      User: response,
-    });
-  });
+    if (result) {
+      return res.status(200).json({
+        success: true,
+        message: "Delete user successfully",
+        User: response,
+      });
+    }
+  } catch (error) {
+    console.log(error, "error");
+  }
 };
 
 const login = async (req, res) => {
-  const { email, password } = req?.body || {};
-  if (!(email && password)) {
-    res.status(400).send("All input is required");
-  }
-  // Validate if user exist in our database
-  const user = await User.findOne({ email, password });
+  try {
+    const { email, password } = req?.body || {};
+    if (!(email && password)) {
+      res.status(400).send("All input is required");
+    }
+    // Validate if user exist in our database
+    const user = await User.findOne({ email, password });
 
-  if (!user)
-    return res.status(400).json({
-      success: false,
-      message: "User does not exist",
-      data: null,
+    if (!user)
+      return res.status(400).json({
+        success: false,
+        message: "User does not exist",
+        data: null,
+      });
+
+    const token = jwt.sign(
+      { user_id: user._id, email },
+      process.env.TOKEN_KEY,
+      {
+        expiresIn: "15s",
+      }
+    );
+
+    user.token = token;
+
+    // return new user
+    return res.status(200).json({
+      success: true,
+      message: "Login successfully",
+      data: user,
     });
+  } catch (error) {
+    console.log(error, "error");
+  }
+};
 
-  const token = jwt.sign({ user_id: user._id, email }, process.env.TOKEN_KEY, {
-    expiresIn: "15s",
-  });
+const refreshToken = async (req, res) => {
+  try {
+    const auth = req?.headers?.authorization;
+    const user =
+      JSON.parse(Buffer.from(auth.split(".")[1], "base64").toString()) || {};
+    if (!user) return res.status(400).send("Data error");
 
-  // save user token
-  user.token = token;
+    const token = jwt.sign(
+      { user_id: user.user_id, email: user.email },
+      process.env.TOKEN_KEY,
+      {
+        expiresIn: "15s",
+      }
+    );
 
-  // return new user
-  return res.status(200).json({
-    success: true,
-    message: "Login successfully",
-    data: user,
-  });
+    return res.status(200).json({
+      success: true,
+      message: "Refresh token successfully",
+      data: token,
+    });
+  } catch (error) {
+    console.log(error, "error");
+  }
 };
 
 module.exports = {
@@ -142,4 +183,5 @@ module.exports = {
   deleteUser,
 
   login,
+  refreshToken,
 };

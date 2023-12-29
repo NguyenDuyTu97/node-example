@@ -10,14 +10,6 @@ const verifyAuth = (req, res, next) => {
       if (err) {
         console.log(err, "error jwt.verify");
 
-        /*
-          err = {
-            name: 'TokenExpiredError',
-            message: 'jwt expired',
-            expiredAt: 1408621000
-          }
-        */
-
         if (err?.name === "TokenExpiredError") {
           return res.status(403).json({
             success: true,
@@ -25,6 +17,8 @@ const verifyAuth = (req, res, next) => {
             data: null,
           });
         }
+
+        return err;
       }
 
       next();

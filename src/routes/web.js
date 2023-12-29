@@ -6,6 +6,7 @@ const {
   updateUser,
   deleteUser,
   login,
+  refreshToken,
 } = require("../controllers/userController");
 const { addRole } = require("../controllers/roleController");
 const { verifyAuth } = require("../middleware/userMiddleware");
@@ -15,6 +16,7 @@ const router = express.Router();
 
 // login
 router.post("/login", login);
+router.post("/refresh-token", refreshToken);
 
 // home
 router.get("/", getHomeInfo);
