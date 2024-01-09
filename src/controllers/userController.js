@@ -1,6 +1,9 @@
 const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
 const User = require("../models/user");
+const bcrypt = require("bcrypt");
+
+const saltRounds = 10;
 
 const getUsers = async (req, res) => {
   try {
@@ -26,12 +29,14 @@ const getUsers = async (req, res) => {
 const addUser = async (req, res) => {
   try {
     const { firstName, lastName, email, password } = req?.body || {};
+    const encodePassword = await bcrypt.hash(password, saltRounds);
+
     const newUser = new User({
       _id: new mongoose.Types.ObjectId(),
       firstName,
       lastName,
       email,
-      password,
+      password: encodePassword,
     });
 
     const result = await newUser.save();
@@ -95,7 +100,7 @@ const deleteUser = async (req, res) => {
       return res.status(203).json({
         success: true,
         message: "User does not exist",
-        User: null,
+        data: null,
       });
 
     const result = await User.deleteOne({
@@ -106,7 +111,7 @@ const deleteUser = async (req, res) => {
       return res.status(200).json({
         success: true,
         message: "Delete user successfully",
-        User: response,
+        data: null,
       });
     }
   } catch (error) {
@@ -121,12 +126,14 @@ const login = async (req, res) => {
       res.status(400).send("All input is required");
     }
     // Validate if user exist in our database
-    const user = await User.findOne({ email, password });
+    const user = await User.findOne({ email });
+    const checkPassword = await bcrypt.compare(password, user.password);
+    console.log(checkPassword, "checkPassword 111");
 
-    if (!user)
+    if (!user || !checkPassword)
       return res.status(400).json({
         success: false,
-        message: "User does not exist",
+        message: "Account or password is incorrect",
         data: null,
       });
 
@@ -138,13 +145,14 @@ const login = async (req, res) => {
       }
     );
 
-    user.token = token;
+    const { _id, firstName, lastName } = user;
+    const userResponse = { _id, firstName, lastName, token, email: user.email };
 
     // return new user
     return res.status(200).json({
       success: true,
       message: "Login successfully",
-      data: user,
+      data: userResponse,
     });
   } catch (error) {
     console.log(error, "error");
