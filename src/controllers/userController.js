@@ -127,13 +127,19 @@ const login = async (req, res) => {
     }
     // Validate if user exist in our database
     const user = await User.findOne({ email });
-    const checkPassword = await bcrypt.compare(password, user.password);
-    console.log(checkPassword, "checkPassword 111");
 
-    if (!user || !checkPassword)
+    if (!user)
       return res.status(400).json({
         success: false,
-        message: "Account or password is incorrect",
+        message: "User is incorrect",
+        data: null,
+      });
+
+    const checkPassword = await bcrypt.compare(password, user.password);
+    if (!checkPassword)
+      return res.status(400).json({
+        success: false,
+        message: "Password is incorrect",
         data: null,
       });
 
