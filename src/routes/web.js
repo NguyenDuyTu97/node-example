@@ -22,7 +22,8 @@ router.post("/refresh-token", refreshToken);
 router.get("/", getHomeInfo);
 
 // user
-router.get("/get-users", verifyAuth, getUsers);
+// router.get("/get-users", verifyAuth, getUsers);
+router.get("/get-users", getUsers);
 router.post("/add-user", addUser);
 router.put("/update-user", updateUser);
 router.delete("/delete-user/:id", deleteUser);
