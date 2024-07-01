@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
 const User = require("../models/user");
 const bcrypt = require("bcrypt");
+const { OAuth2Client } = require("google-auth-library");
 
 const saltRounds = 10;
 
@@ -184,6 +185,62 @@ const refreshToken = async (req, res) => {
       success: true,
       message: "Refresh token successfully",
       data: token,
+    });
+  } catch (error) {
+    console.log(error, "error");
+  }
+};
+
+const verifyLoginWithGoogle = async (req, res) => {
+  try {
+    const { email, password } = req?.body || {};
+
+    const client = new OAuth2Client(
+      "840559433704-iobvec3lult0r7kq4cqhuirjfe39gaq7.apps.googleusercontent.com"
+    );
+
+    const ticket = await client.verifyIdToken({
+      idToken: idToken,
+      audience: CLIENT_ID,
+    });
+
+    if (!(email && password)) {
+      res.status(400).send("All input is required");
+    }
+    // Validate if user exist in our database
+    const user = await User.findOne({ email });
+
+    if (!user)
+      return res.status(400).json({
+        success: false,
+        message: "User is incorrect",
+        data: null,
+      });
+
+    const checkPassword = await bcrypt.compare(password, user.password);
+    if (!checkPassword)
+      return res.status(400).json({
+        success: false,
+        message: "Password is incorrect",
+        data: null,
+      });
+
+    const token = jwt.sign(
+      { user_id: user._id, email },
+      process.env.TOKEN_KEY,
+      {
+        expiresIn: "15s",
+      }
+    );
+
+    const { _id, firstName, lastName } = user;
+    const userResponse = { _id, firstName, lastName, token, email: user.email };
+
+    // return new user
+    return res.status(200).json({
+      success: true,
+      message: "Login successfully",
+      data: userResponse,
     });
   } catch (error) {
     console.log(error, "error");
