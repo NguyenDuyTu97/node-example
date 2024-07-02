@@ -61,20 +61,19 @@ const addUser = async (req, res) => {
 
 const updateUser = async (req, res) => {
   try {
-    const { id, firstName, lastName, email, password } = req?.body || {};
+    const { _id, ...rest } = req?.body || {};
+    const user = await User.findById(_id).exec();
 
-    const user = await User.findById(id).exec();
+    // validation
     if (!user)
       return res.status(203).json({
-        success: true,
+        success: false,
         message: "User does not exist",
         data: null,
       });
 
-    const result = await User.updateOne(
-      {},
-      { firstName, lastName, email, password }
-    );
+    // update data
+    const result = await User.updateOne({ _id }, { ...rest });
     if (result) {
       return res.status(200).json({
         success: true,
@@ -99,7 +98,7 @@ const deleteUser = async (req, res) => {
     const user = await User.findById(id).exec();
     if (!user)
       return res.status(203).json({
-        success: true,
+        success: false,
         message: "User does not exist",
         data: null,
       });
@@ -146,9 +145,9 @@ const login = async (req, res) => {
 
     const token = jwt.sign(
       { user_id: user._id, email },
-      process.env.TOKEN_KEY,
+      process.env.ACCESS_TOKEN_PRIVATE_KEY,
       {
-        expiresIn: "15s",
+        expiresIn: "30m",
       }
     );
 
@@ -175,9 +174,9 @@ const refreshToken = async (req, res) => {
 
     const token = jwt.sign(
       { user_id: user.user_id, email: user.email },
-      process.env.TOKEN_KEY,
+      process.env.ACCESS_TOKEN_PRIVATE_KEY,
       {
-        expiresIn: "15s",
+        expiresIn: "30m",
       }
     );
 
@@ -193,55 +192,11 @@ const refreshToken = async (req, res) => {
 
 const verifyLoginWithGoogle = async (req, res) => {
   try {
-    const { email, password } = req?.body || {};
+    const { accessToken } = req?.body || {};
+    console.log(req?.body, "req body 000");
 
-    const client = new OAuth2Client(
-      "840559433704-iobvec3lult0r7kq4cqhuirjfe39gaq7.apps.googleusercontent.com"
-    );
-
-    const ticket = await client.verifyIdToken({
-      idToken: idToken,
-      audience: CLIENT_ID,
-    });
-
-    if (!(email && password)) {
-      res.status(400).send("All input is required");
-    }
-    // Validate if user exist in our database
-    const user = await User.findOne({ email });
-
-    if (!user)
-      return res.status(400).json({
-        success: false,
-        message: "User is incorrect",
-        data: null,
-      });
-
-    const checkPassword = await bcrypt.compare(password, user.password);
-    if (!checkPassword)
-      return res.status(400).json({
-        success: false,
-        message: "Password is incorrect",
-        data: null,
-      });
-
-    const token = jwt.sign(
-      { user_id: user._id, email },
-      process.env.TOKEN_KEY,
-      {
-        expiresIn: "15s",
-      }
-    );
-
-    const { _id, firstName, lastName } = user;
-    const userResponse = { _id, firstName, lastName, token, email: user.email };
-
-    // return new user
-    return res.status(200).json({
-      success: true,
-      message: "Login successfully",
-      data: userResponse,
-    });
+    // const tokenInfo = await oAuth2Client.getTokenInfo(accessToken);
+    // console.log(tokenInfo, "token info 1");
   } catch (error) {
     console.log(error, "error");
   }
@@ -255,4 +210,6 @@ module.exports = {
 
   login,
   refreshToken,
+
+  verifyLoginWithGoogle,
 };

@@ -6,23 +6,27 @@ const verifyAuth = (req, res, next) => {
   if (token) {
     const accessToken = token.split(" ")[1];
 
-    jwt.verify(accessToken, process.env.TOKEN_KEY, function (err, decoded) {
-      if (err) {
-        console.log(err, "error jwt.verify");
+    jwt.verify(
+      accessToken,
+      process.env.ACCESS_TOKEN_PRIVATE_KEY,
+      function (err, decoded) {
+        if (err) {
+          console.log(err, "error jwt.verify");
 
-        if (err?.name === "TokenExpiredError") {
-          return res.status(403).json({
-            success: true,
-            message: "token expired",
-            data: null,
-          });
+          if (err?.name === "TokenExpiredError") {
+            return res.status(403).json({
+              success: true,
+              message: "token expired",
+              data: null,
+            });
+          }
+
+          return err;
         }
 
-        return err;
+        next();
       }
-
-      next();
-    });
+    );
   } else {
     return res.status(401).json({
       success: true,

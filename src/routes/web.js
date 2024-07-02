@@ -7,6 +7,7 @@ const {
   deleteUser,
   login,
   refreshToken,
+  verifyLoginWithGoogle,
 } = require("../controllers/userController");
 const { addRole } = require("../controllers/roleController");
 const { verifyAuth } = require("../middleware/userMiddleware");
@@ -17,6 +18,7 @@ const router = express.Router();
 // login
 router.post("/login", login);
 router.post("/refresh-token", refreshToken);
+router.post("/verify-login-with-google", verifyLoginWithGoogle);
 
 // home
 router.get("/", getHomeInfo);
@@ -25,7 +27,7 @@ router.get("/", getHomeInfo);
 router.get("/get-users", verifyAuth, getUsers);
 // router.get("/get-users", getUsers);
 router.post("/add-user", addUser);
-router.put("/update-user", updateUser);
+router.patch("/update-user", updateUser);
 router.delete("/delete-user/:id", deleteUser);
 
 // role
